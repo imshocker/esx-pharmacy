@@ -1,11 +1,13 @@
-local QBCore = exports['qb-core']:GetCoreObject()
+local ESX = nil
+TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 local writingrx = false
 local ox_inventory = exports.ox_inventory
 local IsTargetReady = GetResourceState(Config.target) == "started" or GetResourceState("ox_target") == "started" or GetResourceState("qb-target") == "started"
 
-AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
+RegisterNetEvent('esx:playerLoaded')
+AddEventHandler('esx:playerLoaded', function()
     if GetResourceState('ox_inventory'):match("start") then
-        exports.ox_inventory:displayMetadata({
+        exports['ox_inventory']:displayMetadata({
             rx_patient = "Patient",
             rx_quantity = "Quantity",
             rx = "Prescription",
@@ -150,27 +152,28 @@ RegisterNetEvent('rj-pharmacy:client:CreateRx', function(rx)
 end)
 
 RegisterNetEvent('rj-pharmacy:client:GiveRx', function(rx)
-    local player, distance = QBCore.Functions.GetClosestPlayer(GetEntityCoords(PlayerPedId()))
-    if player ~= -1 and distance < 3 then
-            local playerId = GetPlayerServerId(player)
-            SetCurrentPedWeapon(PlayerPedId(),'WEAPON_UNARMED',true)
-            TriggerServerEvent('rj-pharmacy:server:GiveRx', playerId, rx)
+    local closestPlayer, distance = ESX.Game.GetClosestPlayer()
+    if closestPlayer ~= -1 and distance < 3.0 then
+        local playerId = GetPlayerServerId(closestPlayer)
+        SetCurrentPedWeapon(PlayerPedId(), 'WEAPON_UNARMED', true)
+        TriggerServerEvent('rj-pharmacy:server:GiveRx', playerId, rx)
     else
-        QBCore.Functions.Notify("No one nearby!", "error")
+        ESX.ShowNotification("No one nearby!", "error")
     end
 end)
 
 RegisterNetEvent('rj-pharmacy:client:tickRx', function(item)
     TriggerEvent('animations:client:EmoteCommandStart', {"notepad"})
-    QBCore.Functions.Progressbar("tickrx", "Updating prescription...", 1500, false, true, {
-        disableMovement = false,
-        disableCarMovement = false,
-        disableMouse = false,
-        disableCombat = true,
-    }, {}, {}, {}, function() -- Done
+    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'tick_rx_menu', {
+        title    = 'Updating Prescription',
+        align    = 'top-right',
+        elements = {},
+    }, function(data, menu)
+        menu.close()
         TriggerEvent('animations:client:EmoteCommandStart', {"c"})
         TriggerServerEvent('rj-pharmacy:server:tickRx', item)
-    end, function() -- Cancel
+    end, function(data, menu)
+        menu.close()
         TriggerEvent('animations:client:EmoteCommandStart', {"c"})
     end)
 end)
