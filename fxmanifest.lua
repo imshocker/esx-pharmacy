@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 
 description 'Simple Pharmacy Script for FiveM'
-author 'RijayJH'
+author 'imshocker'
 version '0.1.0'
 
 client_scripts {
